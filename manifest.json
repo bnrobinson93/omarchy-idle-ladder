@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "idle-ladder",
+  "name": "Idle ladder",
+  "version": "2.0.0",
+  "author": "Brad",
+  "description": "Fade the backlight before the idle lock, and suspend shortly after it on battery",
+  "kinds": [
+    "service"
+  ],
+  "entryPoints": {
+    "service": "IdleLadder.qml"
+  }
+}

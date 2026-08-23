@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Fade screen brightness ahead of the idle lock, for the idle-ladder shell
+# plugin. `idle-dim fade` walks down to 10%, `idle-dim restore` snaps back —
+# killing an in-flight fade first, so the restore can't be overwritten by
+# remaining fade steps (the bug this fixes).
+
+PIDFILE=/tmp/idle-dim.pid
+FADED=/tmp/idle-dim.faded
+
+case "${1:-fade}" in
+  fade)
+    # Stay awake means stay lit: upstream disables its own idle cycle on this
+    # flag, so nothing would follow the fade anyway.
+    [[ -f "$HOME/.local/state/omarchy/indicators/stay-awake" ]] && exit 0
+    echo $$ >"$PIDFILE"
+    cur=$(brightnessctl -m | cut -d, -f4 | tr -d %)
+    brightnessctl -s set "$cur%" >/dev/null # save for restore
+    touch "$FADED"
+    for b in $(seq $((cur - 1)) -1 10); do
+      sleep 0.03
+      brightnessctl set "$b%" >/dev/null
+    done
+    rm -f "$PIDFILE"
+    ;;
+  restore)
+    # Without this guard a restore that follows no fade would replay whatever
+    # level brightnessctl last saved, which may be hours stale.
+    [[ -f "$FADED" ]] || exit 0
+    if [[ -f "$PIDFILE" ]]; then
+      kill "$(cat "$PIDFILE")" 2>/dev/null
+      rm -f "$PIDFILE"
+      sleep 0.05 # let an already-spawned brightnessctl step land first
+    fi
+    brightnessctl -r >/dev/null
+    rm -f "$FADED"
+    ;;
+esac
