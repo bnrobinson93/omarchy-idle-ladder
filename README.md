@@ -108,3 +108,29 @@ idle-ladder: fade at 180s, lock at 300s (ours), suspend at 420s (battery)
 Editing plugin files in `~/.config/omarchy/plugins/idle-ladder/` needs
 `omarchy restart shell` to take effect — the shell logs a reload on save but keeps running
 the code it loaded at install time. Config edits in `shell.json` do hot-reload.
+
+## Remove
+
+```bash
+omarchy plugin remove idle-ladder
+```
+
+That disables the service, drops its entry from `~/.config/omarchy/shell.json`,
+and deletes the plugin directory. Nothing is left behind elsewhere: the ladder
+keeps no state of its own, and the lock reverts to `idle.lock` for both power
+sources. Removing it *during* a fade is the one case worth knowing about: the
+fade has no teardown hook, so the backlight stays where it was left. `idle-dim`
+saves the old level with `brightnessctl -s`, so `brightnessctl -r` brings it
+back.
+
+## License and dependencies
+
+MIT — see [LICENSE](LICENSE).
+
+| Dependency | Required | Why |
+| --- | --- | --- |
+| Omarchy 4 (Quattro) with Quickshell | yes | the shell that hosts the plugin |
+| `brightnessctl` | for the fade rung | walks the backlight down and restores it; Omarchy already installs it |
+| `systemctl` | for the suspend rung | `systemctl suspend`, from systemd |
+
+Nothing is vendored, nothing is compiled, and no network call is made.
